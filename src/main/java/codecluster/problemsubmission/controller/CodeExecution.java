@@ -16,7 +16,7 @@ public class CodeExecution {
     private CodeExecutionService codeExecutionService;
 
     @PostMapping("/{problemId}/run")
-    public ResponseEntity<ExecutedResponseDto> run(@PathVariable("problemId") String problemId, @RequestBody ExecuteCodeDto requestDto){
+    public ResponseEntity<ExecutedResponseDto> run(@PathVariable("problemId") Long problemId, @RequestBody ExecuteCodeDto requestDto){
         ExecutedResponseDto responseDto = codeExecutionService.getResult(problemId, false, requestDto);
         return ResponseEntity.accepted().build();
     }
