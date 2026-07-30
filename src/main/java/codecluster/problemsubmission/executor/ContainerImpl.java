@@ -12,7 +12,7 @@ public class ContainerImpl implements Container{
     @Override
     public CodeExecutionResult executeProgram(List<TestCase> testCases) {
         // Dummy Implementation
-        System.out.println("Programm Executed With TestCases");
-        return null;
+        System.out.println("Program Executed With TestCases");
+        return new CodeExecutionResult();
     }
 }
