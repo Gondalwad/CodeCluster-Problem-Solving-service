@@ -1,12 +1,22 @@
 package codecluster.problemsubmission.dto;
 
+import java.util.List;
+
 public class ExecutedResponseDto {
-    private String error;
-    private String totalNoOfTestCases;
-    private String passedTestcases;
+    private int errorCode;
+    private int totalNoOfTestCases;
+    private int noOfPassedTestCases;
     private boolean isSuccessful;
     private String errorMessage;
+    private List<TestCaseResponseDto> testCases;
 
+    public List<TestCaseResponseDto> getFailedTestCase() {
+        return testCases;
+    }
+
+    public void setFailedTestCase(List<TestCaseResponseDto> testCases) {
+        this.testCases = testCases;
+    }
 
     public String getErrorMessage() {
         return errorMessage;
@@ -24,27 +34,20 @@ public class ExecutedResponseDto {
         isSuccessful = successful;
     }
 
-    public String getPassedTestcases() {
-        return passedTestcases;
+    public int getNoOfPassedTestCases() {
+        return noOfPassedTestCases;
     }
 
-    public void setPassedTestcases(String passedTestcases) {
-        this.passedTestcases = passedTestcases;
+    public void setNoOfPassedTestCases(int noOfPassedTestCases) {
+        this.noOfPassedTestCases = noOfPassedTestCases;
     }
 
-    public String getTotalNoOfTestCases() {
+    public int getTotalNoOfTestCases() {
         return totalNoOfTestCases;
     }
 
-    public void setTotalNoOfTestCases(String totalNoOfTestCases) {
+    public void setTotalNoOfTestCases(int totalNoOfTestCases) {
         this.totalNoOfTestCases = totalNoOfTestCases;
     }
 
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
 }

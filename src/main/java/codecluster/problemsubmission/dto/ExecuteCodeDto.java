@@ -2,7 +2,7 @@ package codecluster.problemsubmission.dto;
 
 public class ExecuteCodeDto {
     private String program;
-    private String programmingLanguage;
+    private Short programmingLanguageId;
     private String userId;
 
     public String getProgram() {
@@ -13,12 +13,12 @@ public class ExecuteCodeDto {
         this.program = program;
     }
 
-    public String getProgrammingLanguage() {
-        return programmingLanguage;
+    public Short getProgrammingLanguageId() {
+        return programmingLanguageId;
     }
 
-    public void setProgrammingLanguage(String programmingLanguage) {
-        this.programmingLanguage = programmingLanguage;
+    public void setProgrammingLanguageId(Short programmingLanguageId) {
+        this.programmingLanguageId = programmingLanguageId;
     }
 
     public String getUserId() {
