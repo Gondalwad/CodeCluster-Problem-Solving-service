@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface TestCasesRepo extends JpaRepository<TestCase, Long> {
     Optional<List<TestCase>> findByCodingQuestionQuestionId(Long questionId);
+    Optional<List<TestCase>> findByCodingQuestionQuestionIdAndIsSampleTrue(Long questionId);
 }
