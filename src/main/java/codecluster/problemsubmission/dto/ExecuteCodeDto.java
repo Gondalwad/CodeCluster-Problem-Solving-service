@@ -1,9 +1,11 @@
 package codecluster.problemsubmission.dto;
 
+import java.util.UUID;
+
 public class ExecuteCodeDto {
     private String program;
     private Short programmingLanguageId;
-    private String userId;
+    private UUID userId;
 
     public String getProgram() {
         return program;
@@ -21,11 +23,12 @@ public class ExecuteCodeDto {
         this.programmingLanguageId = programmingLanguageId;
     }
 
-    public String getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
+
 }
