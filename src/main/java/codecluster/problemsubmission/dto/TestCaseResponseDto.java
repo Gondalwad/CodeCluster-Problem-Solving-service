@@ -1,11 +1,11 @@
 package codecluster.problemsubmission.dto;
 
 public class TestCaseResponseDto {
-    short displayOrder;
-    String input;
-    String output;
-    String expectedOutput;
-    boolean isPassed;
+    private short displayOrder;
+    private String input;
+    private String output;
+    private String expectedOutput;
+    private boolean isPassed;
 
 
     public short getDisplayOrder() {

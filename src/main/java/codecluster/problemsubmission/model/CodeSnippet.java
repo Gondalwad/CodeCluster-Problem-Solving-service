@@ -40,7 +40,55 @@ public class CodeSnippet {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    // Generate getters, setters, constructors and toString() from IntelliJ.
-    // Do NOT include codingQuestion or programmingLanguage in toString()
-    // to avoid LazyInitializationException.
+    public String getDriverCode() {
+        return driverCode;
+    }
+
+    public void setDriverCode(String driverCode) {
+        this.driverCode = driverCode;
+    }
+
+    public String getStarterCode() {
+        return starterCode;
+    }
+
+    public void setStarterCode(String starterCode) {
+        this.starterCode = starterCode;
+    }
+
+    public ProgrammingLanguage getProgrammingLanguage() {
+        return programmingLanguage;
+    }
+
+    public void setProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
+        this.programmingLanguage = programmingLanguage;
+    }
+
+    public CodingQuestion getCodingQuestion() {
+        return codingQuestion;
+    }
+
+    public void setCodingQuestion(CodingQuestion codingQuestion) {
+        this.codingQuestion = codingQuestion;
+    }
+
+    public Long getSnippetId() {
+        return snippetId;
+    }
+
+    public void setSnippetId(Long snippetId) {
+        this.snippetId = snippetId;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
 }
