@@ -5,4 +5,6 @@ import org.springframework.stereotype.Component;
 @Component
 public interface ContainerFactory {
     Container buildContainer(short programmingLanguage);
+    void destroyContainer(String containerId);
+
 }

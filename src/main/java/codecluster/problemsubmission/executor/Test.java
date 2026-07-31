@@ -13,9 +13,13 @@ import java.util.List;
 
 @Service
 public class Test {
+
+    final ContainerFactory containerFactory;
+
     @Autowired
-    @Qualifier("containerFactoryImpl")
-    ContainerFactory containerFactory;
+    public Test(@Qualifier("containerFactoryImpl") ContainerFactory containerFactory) {
+        this.containerFactory = containerFactory;
+    }
 
     /// method executing actual task of the class
     public CodeExecutionResult test(ExecuteCodeDto executeCodeDto, List<TestCase> testCases, CodeSnippet codeSnippet){
@@ -23,7 +27,7 @@ public class Test {
         Container container = containerFactory.buildContainer(executeCodeDto.getProgrammingLanguageId());
 
         /// saves returned string whether it is error or output
-        return container.executeProgram(testCases);
+        return container.executeProgram(executeCodeDto.getProgram(), codeSnippet.getDriverCode(), testCases);
 
     }
 

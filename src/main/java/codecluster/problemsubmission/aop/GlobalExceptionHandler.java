@@ -37,5 +37,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDto);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponseDto> anyRunTimeException(RuntimeException e) {
+        e.printStackTrace();
+        ErrorResponseDto errorDto = new ErrorResponseDto(
+                500,
+                e.getMessage(),
+                e.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDto);
+    }
+
 
 }
