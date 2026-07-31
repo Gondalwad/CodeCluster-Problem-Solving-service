@@ -1,0 +1,21 @@
+services:
+  problem-submission-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: problem-submission-service
+    ports:
+      - "4000:4000"
+    environment:
+      - SPRING_DATASOURCE_URL=${DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - codecluster
+    restart: unless-stopped
+
+networks:
+  codecluster:
+    external: true

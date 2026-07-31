@@ -1,12 +1,41 @@
 package codecluster.problemsubmission.dto;
 
 public class TestCaseResponseDto {
+    private Long testCaseId;
     private short displayOrder;
     private String input;
     private String output;
     private String expectedOutput;
     private boolean isPassed;
+    private int codeClusterErrorCode;
 
+    public TestCaseResponseDto(Long testCaseId, short displayOrder, String input, String output, String expectedOutput, boolean isPassed, int codeClusterErrorCode) {
+        this.testCaseId = testCaseId;
+        this.displayOrder = displayOrder;
+        this.input = input;
+        this.output = output;
+        this.expectedOutput = expectedOutput;
+        this.isPassed = isPassed;
+        this.codeClusterErrorCode = codeClusterErrorCode;
+    }
+
+    public TestCaseResponseDto(){};
+
+    public Long getTestCaseId() {
+        return testCaseId;
+    }
+
+    public void setTestCaseId(Long testCaseId) {
+        this.testCaseId = testCaseId;
+    }
+
+    public int getCodeClusterErrorCode() {
+        return codeClusterErrorCode;
+    }
+
+    public void setCodeClusterErrorCode(int codeClusterErrorCode) {
+        this.codeClusterErrorCode = codeClusterErrorCode;
+    }
 
     public short getDisplayOrder() {
         return displayOrder;
