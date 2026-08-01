@@ -85,7 +85,6 @@ public class DockerContainerImpl implements Container {
                 createFileInContainer("input.txt", tc.getInput());
                 /// Pass testcase input into standard input
                 ExecResult execResult = runCommandInContainer(runCommand,null, 5); // 5s TLE limit
-                System.out.println(execResult.stdout);
                 long timeTaken = System.currentTimeMillis() - startTime;
                 totalExecutionTime += timeTaken;
 
@@ -122,8 +121,8 @@ public class DockerContainerImpl implements Container {
                 }
 
                 /// Clean outputs for comparison (trim trailing whitespaces & newlines)
-                String actualOutput = execResult.stdout.trim();
-                String expectedOutput = tc.getExpectedOutput().trim();
+                String actualOutput = execResult.stdout.substring(0,execResult.stdout.length()-1);
+                String expectedOutput = tc.getExpectedOutput();
                 /// This mechanism has to change in future as it will not check the order of output
                 boolean isPassed = actualOutput.equals(expectedOutput);
 
