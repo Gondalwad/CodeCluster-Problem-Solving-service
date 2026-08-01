@@ -4,16 +4,14 @@ package codecluster.problemsubmission.executor;
 
 import codecluster.problemsubmission.dto.TestCaseResponseDto;
 import codecluster.problemsubmission.enums.SubmissionStatus;
+import codecluster.problemsubmission.exception.ProgrammingLanguageNotSupportedException;
 import codecluster.problemsubmission.model.TestCase;
 import codecluster.problemsubmission.util.CodeExecutionResult;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.async.ResultCallbackTemplate;
-import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.api.model.StreamType;
+import com.github.dockerjava.core.command.ExecStartResultCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,7 +26,7 @@ public class DockerContainerImpl implements Container {
     private static final Logger log = LoggerFactory.getLogger(DockerContainerImpl.class);
 
     private final String containerId;
-    private final short programmingLanguage; // 1=Java, 2=Python, 3=C++, 4=C, 5=JS
+    private final short programmingLanguage;
     private final DockerClient dockerClient;
 
     public DockerContainerImpl(String containerId, short programmingLanguage, DockerClient dockerClient) {
@@ -42,6 +40,14 @@ public class DockerContainerImpl implements Container {
         return containerId;
     }
 
+    /**
+     * This method executes manages the entire execution of code with helper methods
+     * stops the execution if any error occurred and respond to user accordingly.
+     * @param userCode   The code submitted by the user/student
+     * @param driverCode The harness/driver code that feeds input and captures output
+     * @param testCases  The list of test cases (stdin, expected output)
+     * @return
+     */
     @Override
     public CodeExecutionResult executeProgram(String userCode, String driverCode, List<TestCase> testCases) {
         List<TestCaseResponseDto> testCaseResults = new ArrayList<>();
@@ -58,7 +64,7 @@ public class DockerContainerImpl implements Container {
             /// Compile the code for compiled languages
             String compileCommand = getCompileCommand(programmingLanguage, filename);
             if (compileCommand != null) {
-                ExecResult compileResult = runCommandInContainer(compileCommand, null, 10); // 10s compile limit
+                ExecResult compileResult = runCommandInContainer(compileCommand, null, 30); // 10s compile limit
                 if (compileResult.exitCode != 0) {
                     return buildResult(SubmissionStatus.COMPILE_TIME_ERROR, 0, testCases.size(),
                             compileResult.stderr, 0, testCaseResults);
@@ -120,7 +126,7 @@ public class DockerContainerImpl implements Container {
                 if (isPassed) {
                     passedCount++;
                 }
-
+                ///  at last creation of testcase response dto to add into list
                 new TestCaseResponseDto(
                         tc.getTestCaseId(),
                         tc.getDisplayOrder(),
@@ -154,21 +160,20 @@ public class DockerContainerImpl implements Container {
 
     private String getFileName(short language) {
         return switch (language) {
-            case 1 -> "Main.java";
+            case 1 -> "solution.cpp";
             case 2 -> "solution.py";
-            case 3 -> "solution.cpp";
-            case 4 -> "solution.c";
-            case 5 -> "solution.js";
-            default -> throw new IllegalArgumentException("Unsupported language: " + language);
+            case 3 -> "Main.java";
+            case 4 -> "solution.js";
+            case 5 -> "solution.c";
+            default -> throw new ProgrammingLanguageNotSupportedException("Unsupported language: " + language);
         };
     }
 
-    /// combines the code of user and driver
+    /// method which combines the code of user and driver
     private String combineCode(String userCode, String driverCode, short language) {
         if (driverCode == null || driverCode.isBlank()) {
             return userCode;
         }
-
         // Our driver code will container "///UserCode" string where we are supposed insert the code of user
         return driverCode.replaceFirst("///UserCode", userCode);
     }
@@ -176,21 +181,22 @@ public class DockerContainerImpl implements Container {
     ///  returns command to compile such as javac for java and g++ for cpp
     private String getCompileCommand(short language, String filename) {
         return switch (language) {
-            case 1 -> "javac " + filename;
-            case 3 -> "g++ -O2 " + filename + " -o solution";
-            case 4 -> "gcc -O2 " + filename + " -o solution";
-            default -> null; // Python and JS do not compile
+            case 1 -> "g++ -O2 " + filename + " -o solution";
+            case 2, 4 -> null; // Python (2) and JavaScript (4) do not require compilation
+            case 3 -> "javac " + filename;
+            case 5 -> "gcc -O2 " + filename + " -o solution";
+            default -> throw new ProgrammingLanguageNotSupportedException("Unsupported language ID: " + language);
         };
     }
 
     ///  return command which will run the code compiled by getting compile command through @getCompileCommand()
     private String getRunCommand(short language, String filename) {
         return switch (language) {
-            case 1 -> "java Main";
+            case 1,5 -> "./solution";
             case 2 -> "python3 " + filename;
-            case 3, 4 -> "./solution";
-            case 5 -> "node " + filename;
-            default -> throw new IllegalArgumentException("Unsupported language: " + language);
+            case 3 -> "java Main";
+            case 4 -> "node " + filename;
+            default -> throw new ProgrammingLanguageNotSupportedException("Unsupported language ID: " + language);
         };
     }
 
@@ -205,46 +211,50 @@ public class DockerContainerImpl implements Container {
 
     /// this is where the command with our input will go
     private ExecResult runCommandInContainer(String command, String stdinInput, long timeoutSeconds) {
-        try {
+        // 1. Use docker-java's built-in stream handling callbacks
+        ByteArrayOutputStream stdoutStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderrStream = new ByteArrayOutputStream();
+
+        try (
+                InputStream stdinStream = stdinInput != null && !stdinInput.isEmpty() ?
+                        new ByteArrayInputStream(stdinInput.getBytes(StandardCharsets.UTF_8)) : null;
+                ExecStartResultCallback callback = new ExecStartResultCallback(stdoutStream, stderrStream)
+        ) {
+
             ExecCreateCmdResponse exec = dockerClient.execCreateCmd(containerId)
                     .withAttachStdout(true)
                     .withAttachStderr(true)
-                    .withAttachStdin(stdinInput != null)
-                    .withCmd("sh", "-c", command)
+                    .withAttachStdin(stdinStream != null)
+                    .withCmd("sh", "-c", command) // TIP: Change 'command' to 'command < input.txt' if you switch to file redirection
                     .exec();
 
-            ByteArrayOutputStream stdoutStream = new ByteArrayOutputStream();
-            ByteArrayOutputStream stderrStream = new ByteArrayOutputStream();
+            var startCmd = dockerClient.execStartCmd(exec.getId());
+            if (stdinStream != null) {
+                startCmd = startCmd.withStdIn(stdinStream);
+            }
 
-            InputStream stdinStream = stdinInput != null ?
-                    new ByteArrayInputStream(stdinInput.getBytes(StandardCharsets.UTF_8)) : null;
-
-            ResultCallbackTemplate<ResultCallbackTemplate<?, Frame>, Frame> callback =
-                    new ResultCallbackTemplate<>() {
-                        @Override
-                        public void onNext(Frame frame) {
-                            if (frame.getStreamType() == StreamType.STDOUT) {
-                                stdoutStream.write(frame.getPayload(), 0, frame.getPayload().length);
-                            } else if (frame.getStreamType() == StreamType.STDERR) {
-                                stderrStream.write(frame.getPayload(), 0, frame.getPayload().length);
-                            }
-                        }
-                    };
-
-            boolean completed = dockerClient.execStartCmd(exec.getId())
-                    .withStdIn(stdinStream)
-                    .exec(callback)
-                    .awaitCompletion(timeoutSeconds, TimeUnit.SECONDS);
+            // 2. Execute and wait
+            boolean completed = startCmd.exec(callback).awaitCompletion(timeoutSeconds, TimeUnit.SECONDS);
 
             if (!completed) {
-                return new ExecResult(143, "", "Execution Timed Out", true);
+                return new ExecResult(143, "", "Time Limit Exceeded", true);
             }
 
             int exitCode = dockerClient.inspectExecCmd(exec.getId()).exec().getExitCodeLong().intValue();
-            return new ExecResult(exitCode, stdoutStream.toString(StandardCharsets.UTF_8),
-                    stderrStream.toString(StandardCharsets.UTF_8), false);
 
+            return new ExecResult(
+                    exitCode,
+                    stdoutStream.toString(StandardCharsets.UTF_8),
+                    stderrStream.toString(StandardCharsets.UTF_8),
+                    false
+            );
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Restore interrupted status
+            log.error("Execution interrupted: {}", e.getMessage());
+            return new ExecResult(1, "", "Execution Interrupted", false);
         } catch (Exception e) {
+            log.error("Container execution error: {}", e.getMessage());
             return new ExecResult(1, "", e.getMessage(), false);
         }
     }
@@ -258,6 +268,7 @@ public class DockerContainerImpl implements Container {
         result.setExecutionTimeInMs((int)timeMs);
         result.setCodeClusterErrorCode(status.getCode());
         result.setSuccessful(passed==total);
+        result.setMessage(errorDetails);
         return result;
     }
 
