@@ -8,7 +8,10 @@ import codecluster.problemsubmission.exception.ProgrammingLanguageNotSupportedEx
 import codecluster.problemsubmission.model.TestCase;
 import codecluster.problemsubmission.util.CodeExecutionResult;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallbackTemplate;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.StreamType;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,14 +60,15 @@ public class DockerContainerImpl implements Container {
             /// Writes Source Code Files into Container
             String filename = getFileName(programmingLanguage);
             String fullSource = combineCode(userCode, driverCode, programmingLanguage);
-
+            ///  creates code File in container
             createFileInContainer(filename, fullSource);
 
-
             /// Compile the code for compiled languages
-            String compileCommand = getCompileCommand(programmingLanguage, filename);
-            if (compileCommand != null) {
-                ExecResult compileResult = runCommandInContainer(compileCommand, null, 30); // 10s compile limit
+            String commands = getCompileCommand(programmingLanguage, filename);
+
+
+            if (commands != null) {
+                ExecResult compileResult = runCommandInContainer(commands, null, 30);// 10s compile limit
                 if (compileResult.exitCode != 0) {
                     return buildResult(SubmissionStatus.COMPILE_TIME_ERROR, 0, testCases.size(),
                             compileResult.stderr, 0, testCaseResults);
@@ -73,15 +77,15 @@ public class DockerContainerImpl implements Container {
 
 
             /// Executes Given Test Cases
-            String runCommand = getRunCommand(programmingLanguage, filename);
             long totalExecutionTime = 0;
-
+            String runCommand = getRunCommand(programmingLanguage, filename)+" < input.txt";
             for (TestCase tc : testCases) {
                 long startTime = System.currentTimeMillis();
-
+                /// writes file for input
+                createFileInContainer("input.txt", tc.getInput());
                 /// Pass testcase input into standard input
-                ExecResult execResult = runCommandInContainer(runCommand, tc.getInput(), 5); // 5s TLE limit
-
+                ExecResult execResult = runCommandInContainer(runCommand,null, 5); // 5s TLE limit
+                System.out.println(execResult.stdout);
                 long timeTaken = System.currentTimeMillis() - startTime;
                 totalExecutionTime += timeTaken;
 
@@ -127,7 +131,7 @@ public class DockerContainerImpl implements Container {
                     passedCount++;
                 }
                 ///  at last creation of testcase response dto to add into list
-                new TestCaseResponseDto(
+                testCaseResults.add(new TestCaseResponseDto(
                         tc.getTestCaseId(),
                         tc.getDisplayOrder(),
                         tc.getInput(),
@@ -135,7 +139,7 @@ public class DockerContainerImpl implements Container {
                         tc.getExpectedOutput(),
                         isPassed,
                         isPassed ? SubmissionStatus.ACCEPTED.getCode() : SubmissionStatus.WRONG_ANSWER.getCode()
-                );
+                ));
 
                 ///  halt the execution of rest of the testcases is testcase is not sample and failed
                 if (!isPassed && !tc.getSample()){
@@ -201,7 +205,7 @@ public class DockerContainerImpl implements Container {
     }
 
 
-    /// HELPER METHODS: Docker Execution Mechanics
+    /// HELPER METHODS: Writing file inside the container for code and command-input.txt
     private void createFileInContainer(String filename, String content) {
         // Write source code directly to container filesystem using shell redirection
         String base64Content = java.util.Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
@@ -218,7 +222,19 @@ public class DockerContainerImpl implements Container {
         try (
                 InputStream stdinStream = stdinInput != null && !stdinInput.isEmpty() ?
                         new ByteArrayInputStream(stdinInput.getBytes(StandardCharsets.UTF_8)) : null;
-                ExecStartResultCallback callback = new ExecStartResultCallback(stdoutStream, stderrStream)
+                ResultCallbackTemplate<ResultCallbackTemplate<?, Frame>, Frame> callback =
+                        new ResultCallbackTemplate<>() {
+                            @Override
+                            public void onNext(Frame frame) {
+                                if (frame.getStreamType() == StreamType.STDOUT) {
+                                    stdoutStream.write(frame.getPayload(), 0, frame.getPayload().length);
+                                } else if (frame.getStreamType() == StreamType.STDERR) {
+                                    stderrStream.write(frame.getPayload(), 0, frame.getPayload().length);
+                                }
+                            }
+                        };
+
+
         ) {
 
             ExecCreateCmdResponse exec = dockerClient.execCreateCmd(containerId)
