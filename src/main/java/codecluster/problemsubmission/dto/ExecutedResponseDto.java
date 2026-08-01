@@ -10,11 +10,11 @@ public class ExecutedResponseDto {
     private String errorMessage;
     private List<TestCaseResponseDto> testCases;
 
-    public List<TestCaseResponseDto> getFailedTestCase() {
+    public List<TestCaseResponseDto> getTestCases() {
         return testCases;
     }
 
-    public void setFailedTestCase(List<TestCaseResponseDto> testCases) {
+    public void setTestCases(List<TestCaseResponseDto> testCases) {
         this.testCases = testCases;
     }
 

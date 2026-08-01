@@ -4,7 +4,7 @@ import codecluster.problemsubmission.enums.SubmissionStatus;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-@Converter(autoApply = false)
+@Converter(autoApply = true)
 public class SubmissionStatusConverter
         implements AttributeConverter<SubmissionStatus, String> {
 

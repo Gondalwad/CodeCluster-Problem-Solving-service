@@ -4,7 +4,6 @@ import codecluster.problemsubmission.dao.*;
 import codecluster.problemsubmission.dto.ExecuteCodeDto;
 import codecluster.problemsubmission.dto.ExecutedResponseDto;
 import codecluster.problemsubmission.dto.SubmitCodeWithEvaluationDto;
-import codecluster.problemsubmission.dto.TestCaseResponseDto;
 import codecluster.problemsubmission.enums.SubmissionStatus;
 import codecluster.problemsubmission.exception.NoSuchProblemException;
 import codecluster.problemsubmission.exception.ProgrammingLanguageNotSupportedException;
@@ -14,7 +13,6 @@ import codecluster.problemsubmission.model.CodeSubmission;
 import codecluster.problemsubmission.model.Submission;
 import codecluster.problemsubmission.model.TestCase;
 import codecluster.problemsubmission.util.CodeExecutionResult;
-import codecluster.problemsubmission.util.SnowflakeId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +36,7 @@ public class CodeExecutionService {
     private SubmissionRepo submissionRepo;
     @Autowired
     private CodeSubmissionRepo codeSubmissionRepo;
+
     ///    This only executes sample testcases
     public ExecutedResponseDto getResult(Long problemId, ExecuteCodeDto requestDto) {
 
@@ -50,7 +49,7 @@ public class CodeExecutionService {
 
         Optional<CodeSnippet>  snippet = codeSnippetRepo.findByCodingQuestionQuestionIdAndProgrammingLanguageLanguageId(problemId, requestDto.getProgrammingLanguageId());
         /// error for aop if not found ( as problem id there this must be because no programming language supported )
-        if (snippet.isEmpty()) throw new ProgrammingLanguageNotSupportedException("Programming Language Not Supported");
+        if (snippet.isEmpty() || snippet.get().getDriverCode() == null|| snippet.get().getDriverCode().isBlank()) throw new ProgrammingLanguageNotSupportedException("Programming Language Not Supported");
 
         CodeExecutionResult result = tester.test(requestDto, testcases, snippet.get());
         /// Preparing Executed Response Dto
@@ -96,20 +95,27 @@ public class CodeExecutionService {
         ExecutedResponseDto responseDto = new ExecutedResponseDto();
         responseDto.setTotalNoOfTestCases(noOfTestcases);
         responseDto.setSuccessful(result.isSuccessful());
-        responseDto.setFailedTestCase(result.getTestcases());
-        responseDto.setErrorMessage(result.isSuccessful() ? null : result.getMessage());
+        responseDto.setErrorMessage(result.getMessage());
         /// using stream to get count of passed testcases
-        responseDto.setNoOfPassedTestCases(
-                (int)result.getTestcases().stream()
-                        .filter(TestCaseResponseDto::isPassed)
-                        .count());
+        responseDto.setNoOfPassedTestCases(result.getNoOfPassedTestCases());
+        /// setting only sample testcase and testcases which is failed
+        responseDto.setTestCases(
+                result.getTestcases().stream()
+                        .filter(t -> testCasesRepo.findById(t.getTestCaseId())
+                                .map(TestCase::getSample) // or tc.isSample()
+                                .orElse(false)
+                                || !t.isPassed()
+                        )
+                        .toList() // Converts Stream back to List (use .collect(Collectors.toList()) if on Java < 16)
+        );
+
 
         return responseDto;
     }
 
     ///  this method saves the submission to db
     public void saveToDb(SubmitCodeWithEvaluationDto dto) {
-        submissionRepo.save(dto.getSubmission());
+        dto.getCodeSubmission().setSubmission(dto.getSubmission());
         codeSubmissionRepo.save(dto.getCodeSubmission());
     }
 }

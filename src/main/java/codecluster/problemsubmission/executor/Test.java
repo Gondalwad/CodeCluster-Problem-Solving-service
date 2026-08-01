@@ -5,6 +5,8 @@ import codecluster.problemsubmission.dto.TestCaseResponseDto;
 import codecluster.problemsubmission.model.CodeSnippet;
 import codecluster.problemsubmission.model.TestCase;
 import codecluster.problemsubmission.util.CodeExecutionResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import java.util.List;
 @Service
 public class Test {
 
+    private static final Logger log = LoggerFactory.getLogger(Test.class);
     final ContainerFactory containerFactory;
 
     @Autowired
@@ -27,8 +30,15 @@ public class Test {
         Container container = containerFactory.buildContainer(executeCodeDto.getProgrammingLanguageId());
 
         /// saves returned string whether it is error or output
-        return container.executeProgram(executeCodeDto.getProgram(), codeSnippet.getDriverCode(), testCases);
+        CodeExecutionResult result = container.executeProgram(executeCodeDto.getProgram(), codeSnippet.getDriverCode(), testCases);
+        /// destroys the container after usage
+        try{
+            containerFactory.destroyContainer(container.getContainerId());
+        }catch(Exception e){
+            log.error("Exception occurred while destroying the container :"+e);
+        }
 
+        return result;
     }
 
 

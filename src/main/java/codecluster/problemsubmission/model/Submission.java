@@ -2,8 +2,11 @@ package codecluster.problemsubmission.model;
 
 import codecluster.problemsubmission.enums.SubmissionStatus;
 import codecluster.problemsubmission.util.SnowflakeId;
-import codecluster.problemsubmission.util.converter.SubmissionStatusConverter;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -29,8 +32,9 @@ public class Submission {
     @JoinColumn(name = "assessment_id")
     private Assessments assessment;
 
-    @Column(name = "status", nullable = false)
-    @Convert(converter = SubmissionStatusConverter.class)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", columnDefinition = "submission_status")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private SubmissionStatus status;
 
     @Column(name = "marks_obtained", precision = 5, scale = 2)

@@ -12,11 +12,11 @@ public class CodingQuestion {
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
-    public Long getId() {
+    public Long getQuestionId() {
         return questionId;
     }
 
-    public void setId(Long questionId) {
+    public void setQuestionId(Long questionId) {
         this.questionId = questionId;
     }
 
