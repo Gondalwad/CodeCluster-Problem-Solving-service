@@ -1,0 +1,17 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: problem-submission
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://host.docker.internal:8761/eureka/
+
+  instance:
+    hostname: host.docker.internal
+    non-secure-port: 8083
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${random.value}

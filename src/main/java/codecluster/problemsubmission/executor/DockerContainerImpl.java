@@ -98,7 +98,8 @@ public class DockerContainerImpl implements Container {
                                     " ",
                                     tc.getExpectedOutput(),
                                     false,
-                                    SubmissionStatus.TIME_LIMIT_EXCEEDED.getCode())
+                                    SubmissionStatus.TIME_LIMIT_EXCEEDED.getCode(),
+                                    tc.getSample())
                     );
 
                     return buildResult(SubmissionStatus.TIME_LIMIT_EXCEEDED, passedCount, testCases.size(),
@@ -114,7 +115,8 @@ public class DockerContainerImpl implements Container {
                                     " ",
                                     tc.getExpectedOutput(),
                                     false,
-                                    SubmissionStatus.RUNTIME_EXCEPTION.getCode())
+                                    SubmissionStatus.RUNTIME_EXCEPTION.getCode(),
+                                    tc.getSample())
                     );
                     return buildResult(SubmissionStatus.RUNTIME_EXCEPTION, passedCount, testCases.size(),
                             execResult.stderr, totalExecutionTime, testCaseResults);
@@ -137,7 +139,8 @@ public class DockerContainerImpl implements Container {
                         actualOutput,
                         tc.getExpectedOutput(),
                         isPassed,
-                        isPassed ? SubmissionStatus.ACCEPTED.getCode() : SubmissionStatus.WRONG_ANSWER.getCode()
+                        isPassed ? SubmissionStatus.ACCEPTED.getCode() : SubmissionStatus.WRONG_ANSWER.getCode(),
+                        tc.getSample()
                 ));
 
                 ///  halt the execution of rest of the testcases is testcase is not sample and failed

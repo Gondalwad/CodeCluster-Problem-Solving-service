@@ -100,13 +100,7 @@ public class CodeExecutionService {
         responseDto.setNoOfPassedTestCases(result.getNoOfPassedTestCases());
         /// setting only sample testcase and testcases which is failed
         responseDto.setTestCases(
-                result.getTestcases().stream()
-                        .filter(t -> testCasesRepo.findById(t.getTestCaseId())
-                                .map(TestCase::getSample) // or tc.isSample()
-                                .orElse(false)
-                                || !t.isPassed()
-                        )
-                        .toList() // Converts Stream back to List (use .collect(Collectors.toList()) if on Java < 16)
+                result.getTestcases().stream().filter(t->t.isSample()||!t.isPassed()).toList()
         );
 
 

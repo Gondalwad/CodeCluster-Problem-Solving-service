@@ -8,8 +8,9 @@ public class TestCaseResponseDto {
     private String expectedOutput;
     private boolean isPassed;
     private int codeClusterErrorCode;
+    private boolean isSample;
 
-    public TestCaseResponseDto(Long testCaseId, short displayOrder, String input, String output, String expectedOutput, boolean isPassed, int codeClusterErrorCode) {
+    public TestCaseResponseDto(Long testCaseId, short displayOrder, String input, String output, String expectedOutput, boolean isPassed, int codeClusterErrorCode, boolean isSample) {
         this.testCaseId = testCaseId;
         this.displayOrder = displayOrder;
         this.input = input;
@@ -17,9 +18,18 @@ public class TestCaseResponseDto {
         this.expectedOutput = expectedOutput;
         this.isPassed = isPassed;
         this.codeClusterErrorCode = codeClusterErrorCode;
+        this.isSample = isSample;
     }
 
     public TestCaseResponseDto(){};
+
+    public boolean isSample() {
+        return isSample;
+    }
+
+    public void setSample(boolean sample) {
+        isSample = sample;
+    }
 
     public Long getTestCaseId() {
         return testCaseId;
