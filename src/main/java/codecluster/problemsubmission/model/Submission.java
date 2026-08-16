@@ -3,9 +3,7 @@ package codecluster.problemsubmission.model;
 import codecluster.problemsubmission.enums.SubmissionStatus;
 import codecluster.problemsubmission.util.SnowflakeId;
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;

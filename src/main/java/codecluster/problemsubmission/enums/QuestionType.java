@@ -2,7 +2,7 @@ package codecluster.problemsubmission.enums;
 
 
 public enum QuestionType {
-    MCQ,
-    CODING,
-    DESCRIPTIVE
+    mcq,
+    coding,
+    descriptive
 }
